@@ -10,9 +10,12 @@ CREATE TABLE trophies (
 -- Таблица users (пользователи)
 CREATE TABLE users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    email TEXT UNIQUE,
     username TEXT NOT NULL UNIQUE,
     password_hash TEXT NOT NULL,
     avatar TEXT,
+    bio TEXT,
+    role TEXT NOT NULL DEFAULT 'user',
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
@@ -34,6 +37,14 @@ CREATE TABLE contests (
     description TEXT,
     status TEXT NOT NULL,
     type TEXT NOT NULL,
+    start_date TIMESTAMPTZ,           
+    end_date TIMESTAMPTZ,             
+    registration_start TIMESTAMPTZ,   
+    registration_end TIMESTAMPTZ,     
+    max_participants INTEGER,         
+    max_teams INTEGER,                
+    min_team_size INTEGER,            
+    max_team_size INTEGER,            
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT chk_contests_status CHECK (status IN ('draft', 'active', 'finished', 'cancelled')),
