@@ -9,10 +9,10 @@ import (
 
 type UserRepositoryI interface {
 	GetByID(ctx context.Context, id uuid.UUID) (*models.User, error)
-	GetByUsername(ctx context.Context, username string) (*models.User, error)
-	Create(ctx context.Context, user *models.User) error
-	Update(ctx context.Context, user *models.User) error
-	Delete(ctx context.Context, id uuid.UUID) error
+	//GetByUsername(ctx context.Context, username string) (*models.User, error)
+	Create(ctx context.Context, user *models.User) (*models.User, error)
+	//Update(ctx context.Context, user *models.User) error
+	//Delete(ctx context.Context, id uuid.UUID) error
 }
 
 type TeamRepositoryI interface {
