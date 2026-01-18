@@ -15,9 +15,14 @@ func NewRouter(d Deps) http.Handler {
 	r := chi.NewRouter()
 
 	r.Route("/api", func(r chi.Router) {
-		r.Route("/user", func(r chi.Router) {
+		r.Route("/users", func(r chi.Router) {
 			r.Post("/register", d.UserHandler.RegisterUser)
-			r.Get("/get", d.UserHandler.GetUser)
+
+			r.Route("/{id}", func(r chi.Router) {
+				r.Get("/", d.UserHandler.GetUser)       // GET /api/users/123
+				r.Patch("/", d.UserHandler.UpdateUser)  // PATCH /api/users/123
+				r.Delete("/", d.UserHandler.DeleteUser) //DELETE /api/users/123
+			})
 		})
 	})
 

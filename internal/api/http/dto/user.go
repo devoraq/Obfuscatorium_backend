@@ -19,8 +19,13 @@ type LoginUserRequest struct {
 	Email    string `json:"email"`
 }
 
-type GetUserRequest struct {
-	ID uuid.UUID `json:"id"`
+type UpdateUserRequest struct {
+	Username *string `json:"username,omitempty"`
+	Email    *string `json:"email,omitempty"`
+	Password *string `json:"password,omitempty"`
+	Avatar   *string `json:"avatar,omitempty"`
+	Bio      *string `json:"bio,omitempty"`
+	Role     *string `json:"role,omitempty"`
 }
 
 type UserResponse struct {
