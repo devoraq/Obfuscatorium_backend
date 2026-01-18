@@ -7,6 +7,7 @@ import (
 
 	"github.com/devoraq/Obfuscatorium_backend/internal/config"
 	"github.com/jmoiron/sqlx"
+	_ "github.com/lib/pq"
 )
 
 // Postgres представляет подключение к базе данных
