@@ -21,8 +21,12 @@ func NewUserUseCase(userRepo UserRepositoryI) *UserUseCase {
 	}
 }
 
-func (uc *UserUseCase) GetUser(ctx context.Context, id uuid.UUID) (*models.User, error) {
+func (uc *UserUseCase) GetUserByID(ctx context.Context, id uuid.UUID) (*models.User, error) {
 	return uc.userRepo.GetByID(ctx, id)
+}
+
+func (uc *UserUseCase) GetUserByUsername(ctx context.Context, username string) (*models.User, error) {
+	return uc.userRepo.GetByUsername(ctx, username)
 }
 
 func (uc *UserUseCase) CreateUser(ctx context.Context, user *models.User) (*models.User, error) {

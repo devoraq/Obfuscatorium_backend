@@ -16,7 +16,13 @@ type RegisterUserRequest struct {
 type LoginUserRequest struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
-	Email    string `json:"email"`
+}
+
+type LoginResponse struct {
+	AccessToken string        `json:"access_token,omitempty"`
+	TokenType   string        `json:"token_type"`
+	ExpiresIn   int           `json:"expires_in"`
+	User        *UserResponse `json:"user"`
 }
 
 type UpdateUserRequest struct {

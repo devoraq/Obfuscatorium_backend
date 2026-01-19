@@ -17,6 +17,7 @@ func NewRouter(d Deps) http.Handler {
 	r.Route("/api", func(r chi.Router) {
 		r.Route("/users", func(r chi.Router) {
 			r.Post("/register", d.UserHandler.RegisterUser)
+			r.Post("/login", d.UserHandler.LoginUser)
 
 			r.Route("/{id}", func(r chi.Router) {
 				r.Get("/", d.UserHandler.GetUser)       // GET /api/users/123

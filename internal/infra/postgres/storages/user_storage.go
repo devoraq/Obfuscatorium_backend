@@ -37,6 +37,23 @@ func (s *UserStorage) GetByID(ctx context.Context, id uuid.UUID) (*models.User, 
 	return &user, nil
 }
 
+func (s *UserStorage) GetByUsername(ctx context.Context, username string) (*models.User, error) {
+	query := `SELECT id, email, username, password_hash, avatar, bio, role, created_at, updated_at
+              FROM users WHERE username = $1`
+
+	var user models.User
+	err := s.DB.GetContext(ctx, &user, query, username)
+
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, fmt.Errorf("user with username %s not found", username)
+		}
+		return nil, fmt.Errorf("failed to get user: %w", err)
+	}
+
+	return &user, nil
+}
+
 func (s *UserStorage) Create(ctx context.Context, user *models.User) (*models.User, error) {
 	query := `INSERT INTO users (email, username, password_hash)
 	          VALUES ($1, $2, $3)
