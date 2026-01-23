@@ -2,10 +2,10 @@ package usecases
 
 import (
 	"context"
-	"fmt"
 
-	"github.com/devoraq/Obfuscatorium_backend/internal/api/http/dto"
+	"github.com/devoraq/Obfuscatorium_backend/internal/domain/exceptions"
 	"github.com/devoraq/Obfuscatorium_backend/internal/domain/models"
+	userpb "github.com/devoraq/Obfuscatorium_backend/pkg/gen/go/user/v1"
 	"github.com/devoraq/Obfuscatorium_backend/pkg/validator"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
@@ -36,7 +36,7 @@ func (uc *UserUseCase) CreateUser(ctx context.Context, user *models.User) (*mode
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 	if err != nil {
-		return nil, fmt.Errorf("failed to hash password: %w", err)
+		return nil, exceptions.ErrPasswordHashFailed
 	}
 
 	newUser := models.User{
@@ -48,25 +48,44 @@ func (uc *UserUseCase) CreateUser(ctx context.Context, user *models.User) (*mode
 	return uc.userRepo.Create(ctx, &newUser)
 }
 
-func (uc *UserUseCase) UpdateUser(ctx context.Context, id uuid.UUID, req dto.UpdateUserRequest) (*models.User, error) {
+func (uc *UserUseCase) UpdateUser(ctx context.Context, id uuid.UUID, req *userpb.UpdateUserRequest) (*models.User, error) {
 	updates := make(map[string]any)
 
-	if req.Username != nil {
-		updates["username"] = *req.Username
-	}
-	if req.Email != nil {
-		updates["email"] = *req.Email
-	}
-	if req.Bio != nil {
-		updates["bio"] = *req.Bio
-	}
-	if req.Avatar != nil {
-		updates["avatar"] = *req.Avatar
+	if req.UpdateMask == nil || len(req.UpdateMask.GetPaths()) == 0 {
+		return nil, exceptions.ErrUpdateMaskRequired
 	}
 
-	if req.Password != nil && *req.Password != "" {
-		hash, _ := bcrypt.GenerateFromPassword([]byte(*req.Password), bcrypt.DefaultCost)
-		updates["password_hash"] = string(hash)
+	for _, path := range req.UpdateMask.GetPaths() {
+		switch path {
+		case "username":
+			if req.Username != nil {
+				updates["username"] = req.GetUsername()
+			}
+		case "email":
+			if req.Email != nil {
+				updates["email"] = req.GetEmail()
+			}
+		case "bio":
+			if req.Bio != nil {
+				updates["bio"] = req.GetBio()
+			}
+		case "avatar":
+			if req.Avatar != nil {
+				updates["avatar"] = req.GetAvatar()
+			}
+		case "password":
+			if req.Password != nil && req.GetPassword() != "" {
+				hash, err := bcrypt.GenerateFromPassword([]byte(req.GetPassword()), bcrypt.DefaultCost)
+				if err != nil {
+					return nil, exceptions.ErrPasswordHashFailed
+				}
+				updates["password_hash"] = string(hash)
+			}
+		case "role":
+			if req.Role != nil {
+				updates["role"] = req.GetRole()
+			}
+		}
 	}
 
 	return uc.userRepo.Update(ctx, id, updates)

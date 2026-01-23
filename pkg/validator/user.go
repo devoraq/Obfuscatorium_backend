@@ -1,9 +1,9 @@
 package validator
 
 import (
-	"errors"
-	"fmt"
 	"regexp"
+
+	"github.com/devoraq/Obfuscatorium_backend/internal/domain/exceptions"
 )
 
 var (
@@ -14,16 +14,16 @@ var (
 // ValidateUsername проверяет валидность username
 func ValidateUsername(username string) error {
 	if username == "" {
-		return errors.New("username is required")
+		return exceptions.ErrUsernameRequired
 	}
-	if len(username) < 4 {
-		return errors.New("username must be at least 3 characters")
+	if len(username) < 3 {
+		return exceptions.ErrUsernameTooShort
 	}
 	if len(username) > 50 {
-		return errors.New("username must be at most 50 characters")
+		return exceptions.ErrUsernameTooLong
 	}
 	if !usernameRegex.MatchString(username) {
-		return errors.New("username can only contain letters, numbers and underscores")
+		return exceptions.ErrUsernameInvalidFormat
 	}
 	return nil
 }
@@ -34,10 +34,10 @@ func ValidateEmail(email string) error {
 		return nil // Email опциональный
 	}
 	if len(email) > 255 {
-		return errors.New("email is too long (max 255 characters)")
+		return exceptions.ErrEmailTooLong
 	}
 	if !emailRegex.MatchString(email) {
-		return errors.New("invalid email format")
+		return exceptions.ErrInvalidEmail
 	}
 	return nil
 }
@@ -45,13 +45,13 @@ func ValidateEmail(email string) error {
 // ValidatePassword проверяет валидность пароля
 func ValidatePassword(password string) error {
 	if password == "" {
-		return errors.New("password is required")
+		return exceptions.ErrPasswordRequired
 	}
 	if len(password) < 6 {
-		return errors.New("password must be at least 6 characters")
+		return exceptions.ErrPasswordTooShort
 	}
 	if len(password) > 100 {
-		return errors.New("password must be at most 100 characters")
+		return exceptions.ErrPasswordTooLong
 	}
 	return nil
 }
@@ -62,7 +62,7 @@ func ValidateBio(bio string) error {
 		return nil // Bio опциональный
 	}
 	if len(bio) > 500 {
-		return errors.New("bio must be at most 500 characters")
+		return exceptions.ErrBioTooLong
 	}
 	return nil
 }
@@ -71,18 +71,18 @@ func ValidateBio(bio string) error {
 func ValidateUser(username, password string, email *string) error {
 	// Валидация username
 	if err := ValidateUsername(username); err != nil {
-		return fmt.Errorf("username validation failed: %w", err)
+		return err
 	}
 
 	// Валидация password
 	if err := ValidatePassword(password); err != nil {
-		return fmt.Errorf("password validation failed: %w", err)
+		return err
 	}
 
 	// Валидация email (если передан)
 	if email != nil && *email != "" {
 		if err := ValidateEmail(*email); err != nil {
-			return fmt.Errorf("email validation failed: %w", err)
+			return err
 		}
 	}
 

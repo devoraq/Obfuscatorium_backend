@@ -12,12 +12,22 @@ import (
 type Config struct {
 	Server   ServerConfig
 	Database DatabaseConfig
+	SMTP     SMTPConfig
 }
 
 // ServerConfig содержит настройки HTTP сервера
 type ServerConfig struct {
 	Address        string
 	AllowedOrigins string
+}
+
+type SMTPConfig struct {
+	Host     string
+	Port     int
+	User     string
+	Password string
+	From     string
+	Mode     string
 }
 
 // DatabaseConfig содержит настройки подключения к БД

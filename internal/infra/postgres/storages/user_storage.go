@@ -5,11 +5,14 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/Masterminds/squirrel"
+	"github.com/devoraq/Obfuscatorium_backend/internal/domain/exceptions"
 	"github.com/devoraq/Obfuscatorium_backend/internal/domain/models"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
+	"github.com/lib/pq"
 )
 
 type UserStorage struct {
@@ -29,9 +32,9 @@ func (s *UserStorage) GetByID(ctx context.Context, id uuid.UUID) (*models.User, 
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, fmt.Errorf("user with id %s not found", id)
+			return nil, exceptions.ErrUserNotFound
 		}
-		return nil, fmt.Errorf("failed to get user: %w", err)
+		return nil, exceptions.ErrDatabaseError
 	}
 
 	return &user, nil
@@ -46,9 +49,9 @@ func (s *UserStorage) GetByUsername(ctx context.Context, username string) (*mode
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, fmt.Errorf("user with username %s not found", username)
+			return nil, exceptions.ErrUserNotFound
 		}
-		return nil, fmt.Errorf("failed to get user: %w", err)
+		return nil, exceptions.ErrDatabaseError
 	}
 
 	return &user, nil
@@ -67,6 +70,21 @@ func (s *UserStorage) Create(ctx context.Context, user *models.User) (*models.Us
 	)
 
 	if err != nil {
+		// Проверяем на нарушение уникального ограничения
+		var pgErr *pq.Error
+		if errors.As(err, &pgErr) {
+			// PostgreSQL error code 23505 = unique_violation
+			if pgErr.Code == "23505" {
+				// Определяем, какое поле нарушило уникальность
+				if strings.Contains(pgErr.Constraint, "username") || strings.Contains(pgErr.Detail, "username") {
+					return nil, exceptions.ErrUserAlreadyExists
+				}
+				if strings.Contains(pgErr.Constraint, "email") || strings.Contains(pgErr.Detail, "email") {
+					return nil, exceptions.ErrUserAlreadyExists
+				}
+				return nil, exceptions.ErrUserAlreadyExists
+			}
+		}
 		return nil, fmt.Errorf("failed to create user: %w", err)
 	}
 
@@ -75,7 +93,7 @@ func (s *UserStorage) Create(ctx context.Context, user *models.User) (*models.Us
 
 func (s *UserStorage) Update(ctx context.Context, id uuid.UUID, updates map[string]any) (*models.User, error) {
 	if len(updates) == 0 {
-		return nil, fmt.Errorf("no fields to update")
+		return nil, exceptions.ErrNoFieldsToUpdate
 	}
 
 	psql := squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar)
@@ -88,13 +106,23 @@ func (s *UserStorage) Update(ctx context.Context, id uuid.UUID, updates map[stri
 
 	query, args, err := builder.ToSql()
 	if err != nil {
-		return nil, fmt.Errorf("failed to build query: %w", err)
+		return nil, exceptions.ErrQueryBuildFailed
 	}
 
 	var updatedUser models.User
 	err = s.DB.GetContext(ctx, &updatedUser, query, args...)
 	if err != nil {
-		return nil, fmt.Errorf("db execution failed: %w", err)
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, exceptions.ErrUserNotFound
+		}
+		// Проверяем на нарушение уникального ограничения
+		var pgErr *pq.Error
+		if errors.As(err, &pgErr) {
+			if pgErr.Code == "23505" {
+				return nil, exceptions.ErrUserAlreadyExists
+			}
+		}
+		return nil, exceptions.ErrQueryExecutionFailed
 	}
 
 	return &updatedUser, nil
