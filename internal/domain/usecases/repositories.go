@@ -27,6 +27,14 @@ type ContestRepositoryI interface {
 	Create(ctx context.Context, contest *models.Contest) error
 	Update(ctx context.Context, contest *models.Contest) error
 	Delete(ctx context.Context, id uuid.UUID) error
+	List(ctx context.Context) ([]*models.Contest, error)
+
+	ChangeStatus(ctx context.Context, id uuid.UUID, newStatus models.ContestStatus) error
+	RegisterUser(ctx context.Context, contestID uuid.UUID, userID uuid.UUID) error
+	RegisterTeam(ctx context.Context, contestID uuid.UUID, teamID uuid.UUID) error
+	Unregister(ctx context.Context, contestID uuid.UUID, participantID uuid.UUID) error
+	ListTeamParticipants(ctx context.Context, contestID uuid.UUID) ([]*models.Team, error)
+	ListUserParticipants(ctx context.Context, contestID uuid.UUID) ([]*models.User, error)
 }
 
 type JudgesRepositoryI interface {
