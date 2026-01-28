@@ -25,7 +25,7 @@ func NewUserStorage(db *sqlx.DB) *UserStorage {
 
 func (s *UserStorage) GetByID(ctx context.Context, id uuid.UUID) (*models.User, error) {
 	query := `SELECT id, email, username, password_hash, avatar, bio, role, created_at, updated_at
-			  FROM users WHERE id = $1`
+			  FROM user_service.users WHERE id = $1`
 
 	var user models.User
 	err := s.DB.GetContext(ctx, &user, query, id)
@@ -42,7 +42,7 @@ func (s *UserStorage) GetByID(ctx context.Context, id uuid.UUID) (*models.User, 
 
 func (s *UserStorage) GetByUsername(ctx context.Context, username string) (*models.User, error) {
 	query := `SELECT id, email, username, password_hash, avatar, bio, role, created_at, updated_at
-              FROM users WHERE username = $1`
+              FROM user_service.users WHERE username = $1`
 
 	var user models.User
 	err := s.DB.GetContext(ctx, &user, query, username)
@@ -58,7 +58,7 @@ func (s *UserStorage) GetByUsername(ctx context.Context, username string) (*mode
 }
 
 func (s *UserStorage) Create(ctx context.Context, user *models.User) (*models.User, error) {
-	query := `INSERT INTO users (email, username, password_hash)
+	query := `INSERT INTO user_service.users (email, username, password_hash)
 	          VALUES ($1, $2, $3)
 	          RETURNING id, email, username, password_hash, avatar, bio, role, created_at, updated_at`
 
@@ -98,7 +98,7 @@ func (s *UserStorage) Update(ctx context.Context, id uuid.UUID, updates map[stri
 
 	psql := squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar)
 
-	builder := psql.Update("users").
+	builder := psql.Update("user_service.users").
 		Where(squirrel.Eq{"id": id}).
 		Set("updated_at", squirrel.Expr("NOW()")).
 		SetMap(updates).
@@ -129,7 +129,7 @@ func (s *UserStorage) Update(ctx context.Context, id uuid.UUID, updates map[stri
 }
 
 func (s *UserStorage) Delete(ctx context.Context, id uuid.UUID) error {
-	query := `DELETE FROM users WHERE id = $1`
+	query := `DELETE FROM user_service.users WHERE id = $1`
 
 	result, err := s.DB.ExecContext(ctx, query, id)
 	if err != nil {
