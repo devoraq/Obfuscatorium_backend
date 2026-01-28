@@ -54,5 +54,6 @@ func MapError(err error) error {
 		return status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	return status.Error(codes.Internal, "internal server error")
+	// By default, return internal error with original message
+	return status.Error(codes.Internal, err.Error())
 }

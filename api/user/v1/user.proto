@@ -11,27 +11,27 @@ import "google/protobuf/field_mask.proto";
 service UserService {
   rpc CreateUser(CreateUserRequest) returns (CreateUserResponse) {
     option (google.api.http) = {
-      post: "/api/users"
+      post: "/api/v1/users"
       body: "*"
     };
   }
   rpc LoginUser(LoginUserRequest) returns (LoginUserResponse) {
     option (google.api.http) = {
-      post: "/api/auth/login"
+      post: "/api/v1/auth/login"
       body: "*"
     };
   }
   rpc GetUser(GetUserRequest) returns (GetUserResponse) {
-    option (google.api.http) = { get: "/api/users/{id}" };
+    option (google.api.http) = { get: "/api/v1/users/{id}" };
   }
   rpc UpdateUser(UpdateUserRequest) returns (UpdateUserResponse) {
     option (google.api.http) = {
-      patch: "/api/users/{id}"
+      patch: "/api/v1/users/{id}"
       body: "*"
     };
   }
   rpc DeleteUser(DeleteUserRequest) returns (DeleteUserResponse) {
-    option (google.api.http) = { delete: "/api/users/{id}" };
+    option (google.api.http) = { delete: "/api/v1/users/{id}" };
   }
 }
 

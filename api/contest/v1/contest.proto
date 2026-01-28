@@ -1,0 +1,250 @@
+syntax = "proto3";
+
+package contest.v1;
+
+option go_package = "github.com/devoraq/Obfuscatorium_backend/pkg/gen/go/contest/v1;contestv1";
+
+import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/field_mask.proto";
+
+// Enums для type и status
+enum ContestStatus {
+  CONTEST_STATUS_UNSPECIFIED = 0;
+  CONTEST_STATUS_DRAFT = 1;
+  CONTEST_STATUS_ACTIVE = 2;
+  CONTEST_STATUS_FINISHED = 3;
+  CONTEST_STATUS_CANCELLED = 4;
+}
+
+enum ContestType {
+  CONTEST_TYPE_UNSPECIFIED = 0;
+  CONTEST_TYPE_INDIVIDUAL = 1;
+  CONTEST_TYPE_TEAM = 2;
+}
+
+service ContestService {
+  rpc CreateContest(CreateContestRequest) returns (CreateContestResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/contests"
+      body: "*"
+    };
+  }
+
+  rpc GetContest(GetContestRequest) returns (GetContestResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/contests/{contest_id}"
+    };
+  }
+
+  rpc ListContests(ListContestsRequest) returns (ListContestsResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/contests"
+    };
+  }
+
+  rpc UpdateContest(UpdateContestRequest) returns (UpdateContestResponse) {
+    option (google.api.http) = {
+      patch: "/api/v1/contests/{contest_id}"
+      body: "*"
+    };
+  }
+
+  rpc DeleteContest(DeleteContestRequest) returns (DeleteContestResponse) {
+    option (google.api.http) = {
+      delete: "/api/v1/contests/{contest_id}"
+    };
+  }
+
+  rpc StartContest(StartContestRequest) returns (Contest) {
+    option (google.api.http) = {
+      post: "/api/v1/contests/{contest_id}:start"
+      body: "*"
+    };
+  }
+
+  rpc FinishContest(FinishContestRequest) returns (Contest) {
+    option (google.api.http) = {
+      post: "/api/v1/contests/{contest_id}:finish"
+      body: "*"
+    };
+  }
+
+  rpc CancelContest(CancelContestRequest) returns (Contest) {
+    option (google.api.http) = {
+      post: "/api/v1/contests/{contest_id}:cancel"
+      body: "*"
+    };
+  }
+
+  rpc RegisterParticipant(RegisterParticipantRequest) returns (RegisterParticipantResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/contests/{contest_id}/participants"
+      body: "*"
+    };
+  }
+
+  rpc UnregisterParticipant(UnregisterParticipantRequest) returns (UnregisterParticipantResponse) {
+    option (google.api.http) = {
+      delete: "/api/v1/contests/{contest_id}/participants/{user_id}"
+    };
+  }
+
+  rpc ListParticipants(ListParticipantsRequest) returns (ListParticipantsResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/contests/{contest_id}/participants"
+    };
+  }
+}
+
+// Request/Response messages для основных операций
+message CreateContestRequest {
+  string name = 1;
+  optional string description = 2;
+  ContestType type = 3;
+  google.protobuf.Timestamp start_date = 4;
+  google.protobuf.Timestamp end_date = 5;
+  google.protobuf.Timestamp registration_start = 6;
+  google.protobuf.Timestamp registration_end = 7;
+  optional int32 max_participants = 8; // Для individual
+  optional int32 max_teams = 9; // Для team
+  optional int32 min_team_size = 10; // Для team
+  optional int32 max_team_size = 11; // Для team
+}
+
+message CreateContestResponse {
+  Contest contest = 1;
+}
+
+message GetContestRequest {
+  string contest_id = 1;
+}
+
+message GetContestResponse {
+  Contest contest = 1;
+}
+
+message ListContestsRequest {
+  optional ContestStatus status = 1;
+  optional ContestType type = 2;
+  optional string page_token = 3; // Курсорная пагинация
+  int32 page_size = 4; // Размер страницы (default: 20, max: 100)
+}
+
+message ListContestsResponse {
+  repeated Contest contests = 1;
+  string next_page_token = 2; // Токен для следующей страницы (пустой если последняя)
+}
+
+message UpdateContestRequest {
+  string contest_id = 1;
+  optional string name = 2;
+  optional string description = 3;
+  optional google.protobuf.Timestamp start_date = 4;
+  optional google.protobuf.Timestamp end_date = 5;
+  optional google.protobuf.Timestamp registration_start = 6;
+  optional google.protobuf.Timestamp registration_end = 7;
+  optional int32 max_participants = 8;
+  optional int32 max_teams = 9;
+  optional int32 min_team_size = 10;
+  optional int32 max_team_size = 11;
+  google.protobuf.FieldMask update_mask = 12;
+}
+
+message UpdateContestResponse {
+  Contest contest = 1;
+}
+
+message DeleteContestRequest {
+  string contest_id = 1;
+}
+
+message DeleteContestResponse {}
+
+// Request/Response для управления статусом
+message StartContestRequest {
+  string contest_id = 1;
+}
+
+message FinishContestRequest {
+  string contest_id = 1;
+}
+
+message CancelContestRequest {
+  string contest_id = 1;
+}
+
+// Request/Response для регистрации
+message RegisterParticipantRequest {
+  string contest_id = 1;
+  optional string team_id = 2; // Опционально, только для team contests
+}
+
+message RegisterParticipantResponse {
+  oneof registration {
+    Participant participant = 1; // Для individual contests
+    TeamRegistration team_registration = 2; // Для team contests
+  }
+}
+
+message UnregisterParticipantRequest {
+  string contest_id = 1;
+  string user_id = 2; // ID пользователя для отмены регистрации
+}
+
+message UnregisterParticipantResponse {}
+
+message ListParticipantsRequest {
+  string contest_id = 1;
+  optional string page_token = 2; // Курсорная пагинация
+  int32 page_size = 3; // Размер страницы (default: 20, max: 100)
+}
+
+message ListParticipantsResponse {
+  repeated Participant participants = 1; // Для individual contests
+  repeated TeamRegistration teams = 2; // Для team contests
+  string next_page_token = 3; // Токен для следующей страницы
+}
+
+// Основные message типы
+message Contest {
+  string id = 1;
+  string name = 2;
+  optional string description = 3;
+  ContestStatus status = 4;
+  ContestType type = 5;
+  google.protobuf.Timestamp start_date = 6;
+  google.protobuf.Timestamp end_date = 7;
+  google.protobuf.Timestamp registration_start = 8;
+  google.protobuf.Timestamp registration_end = 9;
+  optional int32 max_participants = 10;
+  optional int32 max_teams = 11;
+  optional int32 min_team_size = 12;
+  optional int32 max_team_size = 13;
+  google.protobuf.Timestamp created_at = 14;
+  google.protobuf.Timestamp updated_at = 15;
+}
+
+message Participant {
+  string user_id = 1;
+  optional UserInfo user = 2;
+  google.protobuf.Timestamp joined_at = 3;
+}
+
+message TeamRegistration {
+  string team_id = 1;
+  optional TeamInfo team = 2;
+  google.protobuf.Timestamp joined_at = 3;
+}
+
+message UserInfo {
+  string id = 1;
+  string username = 2;
+  optional string avatar = 3;
+}
+
+message TeamInfo {
+  string id = 1;
+  string name = 2;
+  int32 members_count = 3;
+}
